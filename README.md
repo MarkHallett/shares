@@ -1,4 +1,4 @@
 shares
 ======
 
-shares trading example
+shares trading example.
