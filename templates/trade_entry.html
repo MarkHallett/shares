@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <head>
+    <title>Trade Entry</title>
+  </head>
+
+  <body>
+    <h2>Trade Entry </h2>
+    entry 
+    <br>
+    share, qty, price
+
+<form action="/signup" method="post">
+  <input type="text" name="share"></input>
+  <input type="text" name="qty"></input>
+  <input type="text" name="price"></input>
+  <input type="radio" name="side" value="buy">Buy
+  <input type="radio" name="side" value="sell">Sell
+  <input type="submit" value="Deal"></input>
+</form>
+
+
+    <br>
+    <br>
+    <a href="http://127.0.0.1:5000">Main</a>
+    <br>
+    <a href="http://127.0.0.1:5000/entry">entry</a>
+    <br>
+    <a href="http://127.0.0.1:5000/data">data</a>
+    <br>
+    <a href="http://127.0.0.1:5000/view">view</a>
+    <br>
+
+  </body>
+</html>
