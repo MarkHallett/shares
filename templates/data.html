@@ -6,11 +6,25 @@
   </head>
 
   <body>
-    <h2>Hello </h2>
-    data
+    <h2>Data </h2>
+    share 
           <ul>
-             {% for share_data in shares_data %}
-                 {{ share_data }} <br>
+             {% for share in shares %}
+                 {{ share }} <br>
+             {% endfor %}
+          </ul>
+
+    price 
+          <ul>
+             {% for price in prices %}
+                 {{ price }} <br>
+             {% endfor %}
+          </ul>
+
+    trade 
+          <ul>
+             {% for  trade in trades %}
+                 {{ trade }} <br>
              {% endfor %}
           </ul>
 

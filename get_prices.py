@@ -1,15 +1,21 @@
 # get_prices.py
 
 import time
+import calendar
 import random
 import datetime
 import sqlite3
 
 def time_stamp2date_time(ts):
     pattern = '%Y-%m-%d %H:%M:%S'
-    es = int(time.mktime(time.strptime(ts, pattern)))
-    dt = datetime.datetime.utcfromtimestamp(es)  # for UTC
-    return dt
+    #es = int(time.mktime(time.strptime(ts, pattern)))
+    #dt = datetime.datetime.utcfromtimestamp(es)  # for UTC
+    #print 'DT',dt, type(dt)
+
+    es2 = int(calendar.timegm(time.strptime(ts, pattern)))
+    dt2 = datetime.datetime.utcfromtimestamp(es2)  # for UTC
+ 
+    return dt2
 
 def get_max_date():
     db = sqlite3.connect("shares.db")
@@ -17,9 +23,9 @@ def get_max_date():
     db.close()
     return max_date
 
-def get_current_prices(current_date): 
+def get_current_prices(): 
     db = sqlite3.connect("shares.db")
-    sql = ''' select symbol, price from price where Timestamp = "%s" ''' % current_date 
+    sql = ''' select symbol, price from price where Timestamp = (select max(Timestamp) from price )                    ''' 
     current_prices  =  db.execute(sql ).fetchall()
     db.close()
 
@@ -41,31 +47,28 @@ def get_new_prices(current_prices):
          
     return new_prices
 
-def insert_prices(date, prices):
+def insert_prices(prices):
+    max_date = time_stamp2date_time(get_max_date()) 
+    new_date =  max_date + datetime.timedelta(days=1)
     
     db = sqlite3.connect("shares.db")
     for symbol, price in prices.items():
-        print 'INSERT %s, %s, %s' %(date,symbol,price)
-        sql = "INSERT INTO price(Timestamp,symbol,price) VALUES ('%s','%s',%s)" %(date,symbol,price)
+        print 'INSERT %s, %s, %s' %(new_date,symbol,price)
+        sql = "INSERT INTO price(Timestamp,symbol,price) VALUES ('%s','%s',%s)" %(new_date,symbol,price)
         db.execute(sql )
     db.commit() 
     db.close()
 
 def insert_new_price():
-    max_date = time_stamp2date_time(get_max_date()) 
-
-    current_prices = get_current_prices(max_date)
+    current_prices = get_current_prices() #max_date)
     new_prices = get_new_prices(current_prices)
-
-
-    new_date =  max_date + datetime.timedelta(days=1)
-    insert_prices(new_date,new_prices)
+    insert_prices(new_prices)
 
 
 def insert_new_prices():
     while True:
         insert_new_price()
-        time.sleep(10)
+        time.sleep(1)
 
 
 insert_new_prices()

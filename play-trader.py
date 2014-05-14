@@ -6,12 +6,15 @@ import sqlite3
 from flask import Flask, render_template
 from flask import request, redirect
 from flask import g
-
+import db_wrap.share
+import db_wrap.trade
+import db_wrap.price
+import db_wrap.values
 
 app = Flask(__name__)
 
 def initialise_db():
-  
+ 
     print 'initialise_db!!'
     if os.path.isfile('shares.db'):
        print 'shares.db exists'
@@ -23,50 +26,17 @@ def initialise_db():
     c = db.cursor()
 
     # Create tables
-    c.execute('''CREATE TABLE share
-             (Id integer PRIMARY KEY,
-              Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-              symbol text )''')
-
-    c.execute('''CREATE TABLE price
-             (Id integer PRIMARY KEY, 
-              Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-              symbol text, price real )''')
-
-    c.execute('''CREATE TABLE trade
-             (Id integer PRIMARY KEY, 
-              Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-              symbol int , 
-              quantity int, 
-              price real )''')
-
+    db_wrap.share.create(c)
+    db_wrap.price.create(c)
+    db_wrap.trade.create(c)
 
     c.execute('''CREATE TABLE shares
              (Id integer PRIMARY KEY, date text, trans text, symbol text, qty real, price real)''')
-
-    # Insert a row of data
-    c.execute("INSERT INTO share(symbol) VALUES ('AA')")
-    c.execute("INSERT INTO share(symbol) VALUES ('BB')")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-01 12:00:00','AA',90)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-01 12:00:00','BB',45)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-02 12:00:00','AA',93)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-02 12:00:00','BB',42)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-03 12:00:00','AA',93)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-03 12:00:00','BB',49)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-04 12:00:00','AA',97)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-04 12:00:00','BB',47)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-05 12:00:00','AA',90)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-05 12:00:00','BB',50)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-05 18:00:00','AA',91)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-06 12:00:00','AA',85)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-06 12:00:00','BB',35)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-07 12:00:00','AA',80)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-07 12:00:00','BB',40)")
-    c.execute("INSERT INTO trade(symbol,quantity,price) VALUES ('AA',10,90)")
-    c.execute("INSERT INTO trade(symbol,quantity,price) VALUES ('AA',20,90)")
-    c.execute("INSERT INTO trade(symbol,quantity,price) VALUES ('AA',-10,95)")
-    c.execute("INSERT INTO shares(date,trans,symbol,qty,price) VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-    c.execute("INSERT INTO shares(date,trans,symbol,qty,price) VALUES ('2006-01-06','BUY','IBM',50,5.40)")
+    
+    # Insert a start data
+    db_wrap.share.insert_start_data(c)
+    db_wrap.price.insert_start_data(c)
+    db_wrap.trade.insert_start_data(c)
 
     db.commit()
     db.close()
@@ -78,15 +48,6 @@ initialise_db()
 def get_shares_data(db):
     return db.execute("SELECT symbol, sum(qty),-sum(price*qty) from shares group by symbol order by symbol").fetchall()
 
-def get_shares(db):
-    return db.execute("SELECT Id, Timestamp, symbol from share").fetchall()
-
-def get_prices(db):
-    return db.execute("SELECT Id, Timestamp, symbol,price from price").fetchall()
-
-def get_trades(db):
-    return db.execute("SELECT Id, Timestamp, symbol,quantity,price from trade").fetchall()
-
 @app.before_request
 def before_request():
     g.db = sqlite3.connect("shares.db")
@@ -96,10 +57,27 @@ def teardown_request(exception):
     if hasattr(g, 'db'):
         g.db.close()
 
-@app.route('/price_insert', methods = ['POST'])
-def price_insert():
-    print 'Insert price'
-    return redirect('/price_entry')
+def insert_trade():
+    pass
+
+
+@app.route('/trade_insert', methods = ['POST'])
+def trade_insert():
+    try:	
+         symbol = request.form['share']
+         quantity = int(request.form['quantity'])
+         side = request.form['side']
+         max_date = db_wrap.price.get_max_date(g.db)
+
+         if side == 'sell':
+             quantity *= -1
+
+         price = db_wrap.price.get_share_price(g.db,max_date, symbol)
+         print 'TRADE ENTRY',max_date, symbol, quantity, price
+         db_wrap.trade.insert(g.db,max_date,symbol,quantity,price)
+    except Exception, e:
+         print "ERROR trade_insert, %s" %str(e)
+    return redirect('/trader_view')
 
 @app.route('/signup', methods = ['POST'])
 def signup():
@@ -124,23 +102,49 @@ def signup():
     except Exception, e:
         print str(e)
 
-@app.route('/price_entry')
-def price_entry():
-    return render_template('price_entry.html')
+@app.route('/trader_view')
+def trader_view():
+    share_entry = render_template('trader_view.html')
+    tmp_view_prices = view_prices()
+    tmp_view_inventory = inventory_view()
+    return share_entry + tmp_view_inventory + tmp_view_prices
 
 @app.route('/trade_entry')
 def trade_entry():
-    #return render_template('price_entry.html')
     return render_template('trade_entry.html')
+
+@app.route('/inventory_view')
+def inventory_view():
+    try:
+        shares = db_wrap.trade.get_trades_inventory(g.db)
+        j_shares = json.dumps(shares )
+        print j_shares
+        x =  render_template('inventory_view.html')
+        return x %str(j_shares)[1:-1]
+    except Exception, e:
+        print 'ERROR inventory_view %s' %(str(e))
+
+    return render_template('inventory_view.html')
+
+@app.route('/value_view')
+def value_view():
+    try:
+        values  = db_wrap.values.get_values(g.db)
+        print 'VALUES', values
+        x =  render_template('value_view.html')
+    except Exception, e:
+        print 'ERROR value_view %s' %str(e)
+    return x %str(values)
+
+    #return render_template('value_view.html')
 
 
 @app.route('/data')
 def data():
-    shares_data = get_shares_data(g.db)
-    shares = get_shares(g.db)
-    prices = get_prices(g.db)
-    trades = get_trades(g.db)
-    return render_template('data.html', shares_data = shares_data, shares = shares, prices = prices, trades=trades )
+    shares = db_wrap.share.get_shares(g.db)
+    prices = db_wrap.price.get_prices(g.db)
+    trades = db_wrap.trade.get_trades(g.db)
+    return render_template('data.html', shares = shares, prices = prices, trades=trades )
 
 @app.route('/view')
 def view():
@@ -151,17 +155,12 @@ def view():
 
 @app.route('/view_prices')
 def view_prices():
-    #shares_data = get_shares_data(g.db)
-    #j_shares_data = json.dumps(shares_data )
-    #x =  render_template('prices_chart.html')
+    shares = db_wrap.share.get_shares(g.db)
+    prices = db_wrap.price.get_prices(g.db)
+    trades = db_wrap.trade.get_trades(g.db)
 
-    shares = get_shares(g.db)
-    prices = get_prices(g.db)
-    trades = get_trades(g.db)
 
-   
     share_symbols = []
-
     cols = " data.addColumn('datetime', 'Date'); \n "
     for share in shares:
           symbol = share[2]
@@ -174,18 +173,6 @@ def view_prices():
 
           cols += headers
    
-     
-    prices_data = '''
-          [new Date(2314, 02, 15, 12, 00, 00), 12400.0, undefined, undefined, 10645, undefined, undefined],
-          [new Date(2314, 2, 16, 12, 0, 0), 24045, 'AA Buy', '100', 12374, undefined, undefined],
-          [new Date(2314, 2, 18, 12, 0, 0), 12284, 'AA Sell', '20', 30000, undefined, undefined ],
-          [new Date(2314, 2, 17, 12, 30, 0), 15766 , 'A' , 'B', 16766, 'C', 'D'],
-          [new Date(2314, 2, 19, 12, 0, 0), 8476, 'AA Sell', '5', 66467, 'BB Sell', '50'],
-          [new Date(2314, 2, 19, 19, 0, 0), 8476, undefined, undefined , 66467, 'BB Sell', '50'],
-          [new Date(2314, 2, 20, 12, 0, 0), 0, undefined, undefined, 55000, 'BB Sell', '150']
-    '''
-    print 'ORIG PRICES_DATA', prices_data
-
     price_data = {}
 
     # convert the sql data into a dictionary
@@ -212,8 +199,6 @@ def view_prices():
   
     prices_data_mh = prices_data_mh[:-2] 
     print 'PRICE DATA NEW'
-    print prices_data_mh 
-  
  
     template =  render_template('prices_chart.html')
     return template %(cols,prices_data_mh)

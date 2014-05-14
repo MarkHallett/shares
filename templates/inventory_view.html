@@ -1,23 +1,19 @@
 <html>
-  <meta http-equiv="refresh" content="10" >
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <head>
-    <title>Shares</title>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
-
       function drawChart() {
         var data = google.visualization.arrayToDataTable([
-          ['Year', 'Qty', 'Cash'],
+          ['Shares', 'Symbol'],
           %s
-          ]);
+        ]);
 
         var options = {
           title: 'Inventory',
-          hAxis: {title: 'Shares', titleTextStyle: {color: 'red'}}
-          };
+          hAxis: {title: 'Symbol', titleTextStyle: {color: 'red'}}
+        };
 
         var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
         chart.draw(data, options);
@@ -26,5 +22,14 @@
   </head>
   <body>
     <div id="chart_div" style="width: 450px; height: 250px;"></div>
+    <br>
+    <br>
+    <a href="http://127.0.0.1:5000">Main</a>
+    <br>
+    <a href="http://127.0.0.1:5000/trader_view">trader view</a>
+    <br>
+
+
+
   </body>
 </html>

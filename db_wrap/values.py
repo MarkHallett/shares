@@ -47,7 +47,7 @@ def get_values(db):
         chart_items.append((symbol, value))
         total_value += value
 
-    chart_items.append(('Total', total_value))
+    chart_items.append(('Profit', total_value))
     return json.dumps(chart_items)[1:-1]
     
 

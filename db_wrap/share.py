@@ -13,5 +13,3 @@ def insert_start_data(c):
 def get_shares(db):
     return db.execute("SELECT Id, Timestamp, symbol from share").fetchall()
 
-
-
