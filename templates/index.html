@@ -1,24 +1,24 @@
-<!DOCTYPE html>
 <html>
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <head>
-    <title>Shares</title>
-  </head>
+<head>
+<title>PlayTrader</title>
+</head>
 
-  <body>
-    <h2>Play-Trader </h2>
-    <br>
-    <br>
-    <a href="http://127.0.0.1:5000/trader_view">trader view</a>
-    <br>
-    <a href="http://127.0.0.1:5000/inventory_view">inventory view</a>
-    <br>
-    <a href="http://127.0.0.1:5000/value_view">value view</a>
-    <br>
-    <a href="http://127.0.0.1:5000/data">table data</a>
-    <br>
-    <a href="http://127.0.0.1:5000/view_prices">view_prices</a>
-    <br>
+<frameset rows="100,*,80" frameborder="0" border="0" framespacing="0">
+  <frame name="topNav" src="top_nav">
+<frameset cols="200,*,*" frameborder="0" border="0" framespacing="0">
+	<frame name="side_menu" src="trader_menu" marginheight="0" marginwidth="0" scrolling="auto" noresize>
+	<frame name="content" src="trader_view" marginheight="0" marginwidth="0" scrolling="auto" noresize>
+<frameset rows=*,*" frameborder="0" border="0" framespacing="0">
+	<frame name="related1" src="related_view1" marginheight="0" marginwidth="0" scrolling="auto" noresize>
+	<frame name="related2" src="related_view2" marginheight="0" marginwidth="0" scrolling="auto" noresize>
+</frameset>
 
-  </body>
+  <frame name="footer" src="footer">
+
+<noframes>
+<p>This section (everything between the 'noframes' tags) will only be displayed if the users' browser doesn't support frames. You can provide a link to a non-frames version of the website here. Feel free to use HTML tags within this section.</p>
+</noframes>
+
+</frameset>
 </html>
+

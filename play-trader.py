@@ -102,12 +102,37 @@ def signup():
     except Exception, e:
         print str(e)
 
+@app.route('/top_nav')
+def top_nav():
+    return render_template('top_nav.html')
+      
+@app.route('/trader_menu')
+def trader_menu():
+    return render_template('trader_menu.html')
+      
+@app.route('/support_menu')
+def support_menu():
+    return render_template('support_menu.html')
+      
+@app.route('/related_view1')
+def related_view1():
+    return value_view() 
+      
+@app.route('/related_view2')
+def related_view2():
+    return inventory_view() 
+      
+@app.route('/footer')
+def footer():
+    return render_template('footer.html')
+      
+
 @app.route('/trader_view')
 def trader_view():
     share_entry = render_template('trader_view.html')
     tmp_view_prices = view_prices()
     tmp_view_inventory = inventory_view()
-    return share_entry + tmp_view_inventory + tmp_view_prices
+    return share_entry + tmp_view_prices
 
 @app.route('/trade_entry')
 def trade_entry():
