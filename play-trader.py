@@ -86,16 +86,13 @@ def signup():
         qty = request.form['qty']
         price = request.form['price']
         side = request.form['side']
-        print share, qty, price,side
   
         price = float(price)
         qty = int(qty)
-        print 'xx', price
         if side == 'sell':
             qty = -qty
 
         sql = "INSERT INTO shares(date,trans,symbol,qty,price) VALUES ('2006-01-07','BUY','%s',%s,%s)" %(share,qty,price) 
-        print 'sql:',sql
         g.db.execute(sql)
         g.db.commit()
         return redirect('/trade_entry')
@@ -131,7 +128,6 @@ def footer():
 def trader_view():
     share_entry = render_template('trader_view.html')
     tmp_view_prices = view_prices()
-    tmp_view_inventory = inventory_view()
     return share_entry + tmp_view_prices
 
 @app.route('/trade_entry')
@@ -143,7 +139,6 @@ def inventory_view():
     try:
         shares = db_wrap.trade.get_trades_inventory(g.db)
         j_shares = json.dumps(shares )
-        print j_shares
         x =  render_template('inventory_view.html')
         return x %str(j_shares)[1:-1]
     except Exception, e:
@@ -155,7 +150,6 @@ def inventory_view():
 def value_view():
     try:
         values  = db_wrap.values.get_values(g.db)
-        print 'VALUES', values
         x =  render_template('value_view.html')
     except Exception, e:
         print 'ERROR value_view %s' %str(e)
@@ -167,8 +161,8 @@ def value_view():
 @app.route('/data')
 def data():
     shares = db_wrap.share.get_shares(g.db)
-    prices = db_wrap.price.get_prices(g.db)
     trades = db_wrap.trade.get_trades(g.db)
+    prices = db_wrap.price.get_prices(g.db)
     return render_template('data.html', shares = shares, prices = prices, trades=trades )
 
 @app.route('/view')
@@ -183,6 +177,18 @@ def view_prices():
     shares = db_wrap.share.get_shares(g.db)
     prices = db_wrap.price.get_prices(g.db)
     trades = db_wrap.trade.get_trades(g.db)
+
+    trade_dates = {}
+    for trade_data in trades:
+        trade_id  = trade_data[0]
+        trade_date = trade_data[1]
+        trade_symbol = trade_data[2]
+        trade_amount = trade_data[3]
+        trade_price = trade_data[4]
+        
+        trade_dates.setdefault(trade_date,{})         
+        trade_dates[trade_date].setdefault(trade_symbol,{})
+        trade_dates[trade_date][trade_symbol] = (trade_id, trade_amount, trade_price )
 
 
     share_symbols = []
@@ -210,20 +216,36 @@ def view_prices():
 
     # start building up the data string
     prices_data_mh = '' 
-   
-    for date, values in price_data.items():
+  
+    date_keys = price_data.keys()
+    date_keys.sort()
+ 
+
+    for date in date_keys:
+        values = price_data[date]
+
         tmp_date, tmp_time = date.split()
         YYYY, MM, DD = tmp_date.split('-')
         hh, mm, ss = tmp_time.split(':')
         
         prices_data_mh += '[new Date(%s, %s, %s, %s, %s, %s)' %(YYYY,MM,DD,hh,mm,ss)
         for share_symbol in share_symbols:
-            prices_data_mh += ', %s, %s, %s' %( values.get(share_symbol,'undefined') ,'undefined','undefined ')
+            # add annotations
+ 
+            if trade_dates.has_key(date) and trade_dates[date].has_key(share_symbol): 
+                trade_id, trade_quantity,trade_price = trade_dates[date][share_symbol]
+                if trade_quantity > 0 :
+                    side = '(%s) Buy' %trade_id
+                else:
+                    side = '(%s) Sell' %trade_id
+                msg2 = '%s %s @ %s' %(trade_quantity, share_symbol, trade_price)
+                prices_data_mh += ", %s, '%s', '%s' " %( values.get(share_symbol,'undefined') ,side,msg2)
+            else:
+                prices_data_mh += ", %s, %s, %s " %( values.get(share_symbol,'undefined') ,'undefined','undefined ')
         prices_data_mh = prices_data_mh[:-1] 
         prices_data_mh += '],\n' 
   
     prices_data_mh = prices_data_mh[:-2] 
-    print 'PRICE DATA NEW'
  
     template =  render_template('prices_chart.html')
     return template %(cols,prices_data_mh)

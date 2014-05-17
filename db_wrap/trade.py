@@ -19,8 +19,8 @@ def insert(db,tmp_date,symbol,quantity,price):
 
 def insert_start_data(c):
     pass
-    c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-02 12:00:00','AA',0,90)")
-    c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-02 12:00:00','BB',0,40)")
+    c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-01-02 12:00:00','AA',10,90)")
+    c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-01-02 12:00:00','BB',10,40)")
     #c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-03 12:00:00','BB',20,90)")
     #c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-04 12:00:00','AA',-10,95)")
     #c.execute("INSERT INTO shares(date,trans,symbol,qty,price) VALUES ('2006-01-05','BUY','AA',100,35.14)")

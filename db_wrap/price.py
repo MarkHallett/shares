@@ -23,11 +23,8 @@ def insert_start_data(c):
     #c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-05 18:00:00','AA',91)")
     c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-06 12:00:00','AA',85)")
     c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-06 12:00:00','BB',35)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-07 12:00:00','AA',80)")
-    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-07 12:00:00','BB',40)")
-    #c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-02 12:00:00','AA',10,90)")
-    #c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-03 12:00:00','AA',20,90)")
-    #c.execute("INSERT INTO trade(Timestamp,symbol,quantity,price) VALUES ('2000-02-04 12:00:00','AA',-10,95)")
+    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-07 12:00:00','AA',95)")
+    c.execute("INSERT INTO price(Timestamp,symbol,price) VALUES ('2000-01-07 12:00:00','BB',50)")
 
 def get_prices(db):
     return db.execute("SELECT Id, Timestamp, symbol,price from price").fetchall()
